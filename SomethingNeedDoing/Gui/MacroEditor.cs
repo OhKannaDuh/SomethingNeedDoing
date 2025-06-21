@@ -18,9 +18,10 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
 {
     private readonly IMacroScheduler _scheduler = scheduler;
     private readonly GitMacroManager _gitManager = gitManager;
-    private bool _showLineNumbers = true;
     private bool _highlightSyntax = true;
     private UpdateState _updateState = UpdateState.Unknown;
+    // private readonly CodeEditor _editor = new();
+
     private readonly CodeEditor _editor = new();
 
     private enum UpdateState
@@ -91,7 +92,7 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
 
     private void DrawRightAlignedControls(IMacro macro)
     {
-        ImGui.SameLine(ImGui.GetWindowWidth() - (macro is ConfigMacro { IsGitMacro: true } ? 145 : 120));
+        ImGui.SameLine(ImGui.GetWindowWidth() - (macro is ConfigMacro { IsGitMacro: true } ? 105 : 80));
 
         using var _ = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey);
 
@@ -106,12 +107,6 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
             if (ImGuiUtils.IconButton(statusIcon, macroCount > 0 ? $"{macroCount} running" : "No macros running"))
                 ws.Toggle<StatusWindow>();
         }
-
-        ImGui.SameLine();
-        if (ImGuiUtils.IconButton(
-            _showLineNumbers ? FontAwesomeHelper.IconSortAsc : FontAwesomeHelper.IconSortDesc,
-            "Toggle Line Numbers"))
-            _showLineNumbers = !_showLineNumbers;
 
         ImGui.SameLine();
         if (ImGuiUtils.IconButton(_highlightSyntax ? FontAwesomeHelper.IconCheck : FontAwesomeHelper.IconXmark, "Syntax Highlighting"))
@@ -156,13 +151,12 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
         using var editorWrapper = ImRaii.Child("CodeEditor", new Vector2(0, height), false);
         if (!editorWrapper) return;
 
-        if (macro is ConfigMacro configMacro)
+        if (macro is not ConfigMacro configMacro) return;
+
+        if (_editor.Draw())
         {
-            if (_editor.Draw())
-            {
-                configMacro.Content = _editor.GetContent();
-                C.Save();
-            }
+            configMacro.Content = _editor.GetContent();
+            C.Save();
         }
     }
 
@@ -172,7 +166,7 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
         using var _ = ImRaii.PushColor(ImGuiCol.FrameBg, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
 
         var chars = macro.Content.Length;
-        ImGuiEx.Text(ImGuiColors.DalamudGrey, $"Name: {macro.Name}  |  Lines: {_editor.Lines}  |  Chars: {chars}  |");
+        ImGuiEx.Text(ImGuiColors.DalamudGrey, $"Name: {macro.Name}  |  Lines: {/**_editor.Lines*/ 1}  |  Chars: {chars}  |");
         ImGui.SameLine(0, 5);
         ImGuiEx.Text(ImGuiColors.DalamudGrey, $"Type: {macro.Type}");
         if (ImGui.IsItemClicked())
