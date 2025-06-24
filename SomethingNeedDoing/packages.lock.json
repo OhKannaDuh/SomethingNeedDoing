@@ -14,6 +14,12 @@
         "resolved": "1.2.25",
         "contentHash": "xCXiw7BCxHJ8pF6wPepRUddlh2dlQlbr81gXA72hdk4FLHkKXas7EH/n+fk5UCA/YfMqG1Z6XaPiUjDbUNBUzg=="
       },
+      "ImGuiColorTextEditNetDalamud": {
+        "type": "Direct",
+        "requested": "[0.3.0, )",
+        "resolved": "0.3.0",
+        "contentHash": "kAFd9P68zq5epYgX9BbqJW4huG+j3Huo73m/mFGUd7QesLtGYoBWMYvsoT9QTOVw0a1h3XrDPyqJpPJivebITA=="
+      },
       "Laylua": {
         "type": "Direct",
         "requested": "[1.0.0, )",
@@ -82,9 +88,6 @@
         "dependencies": {
           "ECommons": "[2.2.0.2, )"
         }
-      },
-      "dalamudcodeeditor": {
-        "type": "Project"
       },
       "ecommons": {
         "type": "Project"

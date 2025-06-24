@@ -24,7 +24,7 @@ public static class EditorPalettes
         0xffffffff, // Selection
         0xffffffff, // ErrorMarker
         0xffffffff, // Breakpoint
-        0xffffffff, // LineNumber
+        0xff4a4a4a, // LineNumber
         0xffffffff, // CurrentLineFill
         0x40282828, // CurrentLineFillInactive
         0x403c3f41, // CurrentLineEdge

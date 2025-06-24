@@ -1,4 +1,6 @@
-﻿using DalamudCodeEditor;
+﻿using Dalamud.Interface;
+using Dalamud.Interface.Utility.Raii;
+using DalamudCodeEditor;
 using SomethingNeedDoing.Core.Interfaces;
 
 namespace SomethingNeedDoing.Gui.Editor;
@@ -8,21 +10,20 @@ namespace SomethingNeedDoing.Gui.Editor;
 /// </summary>
 public class CodeEditor
 {
-    private readonly TextEditor _editor = new();
-    private readonly Dictionary<MacroType, LanguageDefinition> highlighters = new()
+    private readonly TextEditor _editor = new()
     {
-        {MacroType.Lua, LanguageDefinition.Lua},
-        {MacroType.Native, LanguageDefinition.Lua},
+        Palette = EditorPalettes.Highlight,
+    };
+
+    private readonly Dictionary<MacroType, LanguageDefinition> languages = new()
+    {
+        {MacroType.Lua, new LuaLanguageDefinition()},
+        {MacroType.Native, new NativeMacroLanguageDefinition()},
     };
 
     private IMacro? macro = null;
 
-    public int Lines => _editor.TotalLines();
-
-    public CodeEditor()
-    {
-        _editor.Palette = EditorPalettes.Highlight;
-    }
+    public int LineCount => _editor.TotalLines();
 
     public void SetMacro(IMacro macro)
     {
@@ -32,8 +33,8 @@ public class CodeEditor
         this.macro = macro;
         _editor.SetText(macro.Content);
 
-        // if (highlighters.TryGetValue(macro.Type, out var highlighter))
-        //     _editor.SyntaxHighlighter = highlighter;
+        if (languages.TryGetValue(macro.Type, out var language))
+            _editor.LanguageDefinition = language;
     }
 
     public void SetHighlightSyntax(bool highlightSyntax)
@@ -48,7 +49,9 @@ public class CodeEditor
             return false;
         }
 
+        using var font = ImRaii.PushFont(UiBuilder.MonoFont);
         _editor.Render(macro.Name);
+
         return _editor.IsTextChanged();
     }
 }
