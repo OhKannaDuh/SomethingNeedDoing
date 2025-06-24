@@ -1,6 +1,4 @@
 ﻿using ECommons.Automation;
-using ECommons.UIHelpers.AddonMasterImplementations;
-using Lumina.Excel.Sheets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,15 +26,8 @@ public class ActionCommand(string text, string actionName) : MacroCommandBase(te
         awaitCraftAction = false;
         Svc.Log.Debug($"ActionCommand.Execute: Starting {actionName}, UnsafeModifier: {UnsafeModifier != null}, WaitDuration: {WaitDuration}");
 
-        // Simple execution if a wait is present
-        if (WaitDuration > 0)
-        {
-            await context.RunOnFramework(() => Chat.SendMessage(CommandText));
-            await PerformWait(token);
-            return;
-        }
-
         var craftingComplete = new TaskCompletionSource<bool>();
+        var actionExecuted = false;
         void OnConditionChange(ConditionFlag flag, bool value)
         {
             if (flag == ConditionFlag.ExecutingCraftingAction && !value)
@@ -45,16 +36,16 @@ public class ActionCommand(string text, string actionName) : MacroCommandBase(te
 
         await context.RunOnFramework(() =>
         {
-            if (Game.Crafting.GetCondition() is not AddonMaster.Synthesis.Condition.Normal && ConditionModifier?.Conditions.FirstOrDefault() is { } cnd)
+            if (ConditionModifier?.Conditions.FirstOrDefault() is { } cnd)
             {
-                if (Game.Crafting.GetCondition().ToString().EqualsIgnoreCase(cnd))
+                if (!Game.Crafting.GetCondition().ToString().EqualsIgnoreCase(cnd))
                 {
-                    Svc.Log.Debug($"Condition skip: {CommandText}");
+                    Svc.Log.Debug($"Condition skip: condition is {Game.Crafting.GetCondition()}, required condition is {cnd}");
                     return;
                 }
             }
 
-            if (IsCraftAction(actionName))
+            if (Game.Crafting.IsCraftAction(actionName))
             {
                 if (C.CraftSkip)
                 {
@@ -71,13 +62,13 @@ public class ActionCommand(string text, string actionName) : MacroCommandBase(te
                     }
                 }
 
-                if (C.QualitySkip && IsSkippableCraftingQualityAction(actionName) && Game.Crafting.IsMaxProgress())
+                if (C.QualitySkip && Game.Crafting.IsMaxQuality() && Game.Crafting.IsCraftActionQualityIncrease(Game.Crafting.GetCraftAction(actionName, Player.JobId)))
                 {
                     Svc.Log.Debug($"Max quality skip: {CommandText}");
                     return;
                 }
 
-                if (UnsafeModifier is null)
+                if (UnsafeModifier is null && WaitDuration <= 0) // only do smartwait if no wait was specified
                 {
                     awaitCraftAction = true;
                     Svc.Condition.ConditionChange += OnConditionChange;
@@ -85,6 +76,7 @@ public class ActionCommand(string text, string actionName) : MacroCommandBase(te
             }
 
             Chat.SendMessage(CommandText);
+            actionExecuted = true;
         });
 
         if (awaitCraftAction)
@@ -97,7 +89,7 @@ public class ActionCommand(string text, string actionName) : MacroCommandBase(te
             }
             catch (TimeoutException)
             {
-                if (ErrorIfModifier?.Condition == Modifiers.ErrorCondition.ActionTimeout)
+                if (C.StopOnError || ErrorIfModifier?.Condition == Modifiers.ErrorCondition.ActionTimeout)
                     throw new MacroTimeoutException("Did not receive a timely response");
             }
             finally
@@ -105,26 +97,8 @@ public class ActionCommand(string text, string actionName) : MacroCommandBase(te
                 await context.RunOnFramework(() => Svc.Condition.ConditionChange -= OnConditionChange);
             }
         }
+
+        if (WaitDuration > 0 && actionExecuted)
+            await PerformWait(token);
     }
-
-    private bool IsCraftAction(string name) => FindRows<CraftAction>(x => !x.Name.IsEmpty).Select(x => x.Name).Distinct().Contains(name);
-    private bool IsSkippableCraftingQualityAction(string name) => CraftingQualityActionNames.ContainsIgnoreCase(name);
-
-    private static readonly HashSet<string> CraftingQualityActionNames = new(StringComparer.OrdinalIgnoreCase)
-    {
-        // Basic Touch variants
-        "Basic Touch",
-        "Standard Touch",
-        "Advanced Touch",
-        "Precise Touch",
-        "Prudent Touch",
-        "Focused Touch",
-        "Preparatory Touch",
-        "Trained Finesse",
-        // Buffs
-        "Innovation",
-        "Great Strides",
-        // Finishers
-        "Byregot's Blessing"
-    };
 }

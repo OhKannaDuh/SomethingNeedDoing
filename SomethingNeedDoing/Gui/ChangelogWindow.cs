@@ -34,12 +34,13 @@ public class ChangelogWindow : Window
                     return new ChangelogClassGroup
                     {
                         ClassName = classGroup.Key,
-                        Members = members.ToDictionary(e => e.TargetName, e => new ChangelogMemberEntry
-                        {
-                            Name = e.TargetName,
-                            ReturnType = e.MemberInfo is PropertyInfo pi ? pi.PropertyType : e.MemberInfo is MethodInfo mi ? mi.ReturnType : null,
-                            Entries = [e]
-                        })
+                        Members = members.GroupBy(e => e.TargetName)
+                            .ToDictionary(g => g.Key, g => new ChangelogMemberEntry
+                            {
+                                Name = g.Key,
+                                ReturnType = g.First().MemberInfo is PropertyInfo pi ? pi.PropertyType : g.First().MemberInfo is MethodInfo mi ? mi.ReturnType : null,
+                                Entries = [.. g]
+                            })
                     };
                 })
                 .Where(cg => cg != null)
@@ -67,6 +68,9 @@ public class ChangelogWindow : Window
         Add("12.14", "Added OnCleanup function for lua scripts.");
         Add("12.15", "Added syntax highlighting to the editor");
         Add("12.16", "Added type change ability in the editor");
+        Add("12.17", "Fixed Craftloop, and some action skip/waits");
+        Add("12.18", "Fixed autoretainer post process event");
+        Add("12.19", "Added more advanced stub generator by Faye");
     }
 
     private void Add(string version, string description)

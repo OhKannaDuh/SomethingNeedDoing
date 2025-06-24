@@ -6,3 +6,14 @@ Repo:
 ```
 https://puni.sh/api/repository/croizat
 ```
+
+
+### Community Script Repositories
+
+#### SNDScripts 
+https://github.com/WigglyMuffin/SNDScripts/  
+Home of the soon to be legendary functions file, tutorials and alt/retainer/hunt log automation.  
+
+#### The Dumpster Fire
+https://github.com/McVaxius/dhogsbreakfeast  
+Frenrider, script examples, post AR processing scripts, fishing and more.
