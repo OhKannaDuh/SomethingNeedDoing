@@ -34,6 +34,8 @@ public static class FontAwesomeHelper
     public const FontAwesomeIcon IconError = FontAwesomeIcon.Times;
     public const FontAwesomeIcon IconWarning = FontAwesomeIcon.ExclamationTriangle;
     public const FontAwesomeIcon IconCheck = FontAwesomeIcon.Check;
+    public const FontAwesomeIcon ShowWhitespace = FontAwesomeIcon.Eye;
+    public const FontAwesomeIcon HideWhitespace = FontAwesomeIcon.EyeSlash;
 
     // Settings and menus
     public const FontAwesomeIcon IconSettings = FontAwesomeIcon.Cog;

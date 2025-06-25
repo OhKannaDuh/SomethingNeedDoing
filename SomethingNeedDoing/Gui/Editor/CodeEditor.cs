@@ -10,15 +10,15 @@ namespace SomethingNeedDoing.Gui.Editor;
 /// </summary>
 public class CodeEditor
 {
-    private readonly TextEditor _editor = new()
+    private readonly TextEditor _editor = new(new LuaLanguageDefinition())
     {
-        Palette = EditorPalettes.Highlight,
+        Palette = PaletteBuilder.GetDarkPalette(),
     };
 
     private readonly Dictionary<MacroType, LanguageDefinition> languages = new()
     {
         {MacroType.Lua, new LuaLanguageDefinition()},
-        {MacroType.Native, new NativeMacroLanguageDefinition()},
+        // {MacroType.Native, new NativeMacroLanguageDefinition()},
     };
 
     private IMacro? macro = null;
@@ -34,11 +34,21 @@ public class CodeEditor
         _editor.SetText(macro.Content);
 
         if (languages.TryGetValue(macro.Type, out var language))
-            _editor.LanguageDefinition = language;
+            _editor.Language = language;
     }
 
     public void SetHighlightSyntax(bool highlightSyntax)
-        => _editor.Palette = highlightSyntax ? EditorPalettes.Highlight : EditorPalettes.NoHighlight;
+        => _editor.Palette = highlightSyntax ? PaletteBuilder.GetDarkPalette() : PaletteBuilder.GetUnhighlightedDarkPalette();
+
+    public bool IsShowingWhitespaces() => _editor.IsShowingWhitespaces();
+
+    public void ToggleWhitespace()
+        => _editor.SetShowWhitespaces(!IsShowingWhitespaces());
+
+    public bool IsShowingLineNumbers() => _editor.IsShowingLineNumbers();
+
+    public void ToggleLineNumbers()
+        => _editor.SetShowLineNumbers(!IsShowingLineNumbers());
 
     public string GetContent() => _editor.GetText();
 

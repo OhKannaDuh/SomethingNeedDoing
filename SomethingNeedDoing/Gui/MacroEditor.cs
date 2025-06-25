@@ -7,6 +7,7 @@ using ECommons.MathHelpers;
 using SomethingNeedDoing.Core.Interfaces;
 using SomethingNeedDoing.Gui.Editor;
 using SomethingNeedDoing.Managers;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace SomethingNeedDoing.Gui;
@@ -20,7 +21,6 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
     private readonly GitMacroManager _gitManager = gitManager;
     private bool _highlightSyntax = true;
     private UpdateState _updateState = UpdateState.Unknown;
-    // private readonly CodeEditor _editor = new();
 
     private readonly CodeEditor _editor = new();
 
@@ -48,6 +48,7 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
         ImGui.Separator();
 
         var editorHeight = ImGui.GetContentRegionAvail().Y - ImGui.GetFrameHeightWithSpacing() * 2;
+
         DrawCodeEditor(macro, editorHeight);
         DrawStatusBar(macro);
     }
@@ -92,7 +93,11 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
 
     private void DrawRightAlignedControls(IMacro macro)
     {
-        ImGui.SameLine(ImGui.GetWindowWidth() - (macro is ConfigMacro { IsGitMacro: true } ? 105 : 80));
+        int buttonCount = 4;
+        int offset = 40 * buttonCount;
+        int gitMacroPadding = 25;
+
+        ImGui.SameLine(ImGui.GetWindowWidth() - (macro is ConfigMacro { IsGitMacro: true } ? offset + gitMacroPadding : offset));
 
         using var _ = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey);
 
@@ -106,6 +111,19 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
         {
             if (ImGuiUtils.IconButton(statusIcon, macroCount > 0 ? $"{macroCount} running" : "No macros running"))
                 ws.Toggle<StatusWindow>();
+        }
+
+        ImGui.SameLine();
+        if (ImGuiUtils.IconButton(
+            _editor.IsShowingLineNumbers() ? FontAwesomeHelper.IconSortAsc : FontAwesomeHelper.IconSortDesc,
+            "Toggle Line Numbers"))
+            _editor.ToggleLineNumbers();
+
+        ImGui.SameLine();
+        // Change to fontawesome helper
+        if (ImGuiUtils.IconButton(_editor.IsShowingWhitespaces() ? FontAwesomeHelper.HideWhitespace : FontAwesomeHelper.ShowWhitespace, "Toggle Whitespace"))
+        {
+            _editor.ToggleWhitespace();
         }
 
         ImGui.SameLine();
