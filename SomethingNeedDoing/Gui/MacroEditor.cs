@@ -7,7 +7,6 @@ using ECommons.MathHelpers;
 using SomethingNeedDoing.Core.Interfaces;
 using SomethingNeedDoing.Gui.Editor;
 using SomethingNeedDoing.Managers;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace SomethingNeedDoing.Gui;
@@ -19,7 +18,6 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
 {
     private readonly IMacroScheduler _scheduler = scheduler;
     private readonly GitMacroManager _gitManager = gitManager;
-    private bool _highlightSyntax = true;
     private UpdateState _updateState = UpdateState.Unknown;
 
     private readonly CodeEditor _editor = new();
@@ -115,22 +113,19 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
 
         ImGui.SameLine();
         if (ImGuiUtils.IconButton(
-            _editor.IsShowingLineNumbers() ? FontAwesomeHelper.IconSortAsc : FontAwesomeHelper.IconSortDesc,
-            "Toggle Line Numbers"))
+            _editor.IsShowingLineNumbers() ? FontAwesomeHelper.IconSortAsc : FontAwesomeHelper.IconSortDesc, "Toggle Line Numbers"))
             _editor.ToggleLineNumbers();
 
         ImGui.SameLine();
-        // Change to fontawesome helper
         if (ImGuiUtils.IconButton(_editor.IsShowingWhitespaces() ? FontAwesomeHelper.HideWhitespace : FontAwesomeHelper.ShowWhitespace, "Toggle Whitespace"))
         {
             _editor.ToggleWhitespace();
         }
 
         ImGui.SameLine();
-        if (ImGuiUtils.IconButton(_highlightSyntax ? FontAwesomeHelper.IconCheck : FontAwesomeHelper.IconXmark, "Syntax Highlighting"))
+        if (ImGuiUtils.IconButton(_editor.IsHighlightingSyntax() ? FontAwesomeHelper.IconCheck : FontAwesomeHelper.IconXmark, "Syntax Highlighting"))
         {
-            _highlightSyntax = !_highlightSyntax;
-            _editor.SetHighlightSyntax(_highlightSyntax);
+            _editor.ToggleSyntaxHighlight();
         }
 
         if (macro is ConfigMacro { IsGitMacro: true } configMacro)
@@ -184,7 +179,7 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
         using var _ = ImRaii.PushColor(ImGuiCol.FrameBg, new Vector4(0.1f, 0.1f, 0.1f, 1.0f));
 
         var chars = macro.Content.Length;
-        ImGuiEx.Text(ImGuiColors.DalamudGrey, $"Name: {macro.Name}  |  Lines: {/**_editor.Lines*/ 1}  |  Chars: {chars}  |");
+        ImGuiEx.Text(ImGuiColors.DalamudGrey, $"Name: {macro.Name}  |  Lines: {_editor.LineCount}  |  Chars: {chars}  |");
         ImGui.SameLine(0, 5);
         ImGuiEx.Text(ImGuiColors.DalamudGrey, $"Type: {macro.Type}");
         if (ImGui.IsItemClicked())

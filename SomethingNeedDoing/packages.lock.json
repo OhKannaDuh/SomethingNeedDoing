@@ -14,12 +14,6 @@
         "resolved": "1.2.25",
         "contentHash": "xCXiw7BCxHJ8pF6wPepRUddlh2dlQlbr81gXA72hdk4FLHkKXas7EH/n+fk5UCA/YfMqG1Z6XaPiUjDbUNBUzg=="
       },
-      "ImGuiColorTextEditNetDalamud": {
-        "type": "Direct",
-        "requested": "[0.4.0, )",
-        "resolved": "0.4.0",
-        "contentHash": "JeL4P8zGU74v99y1rLtfBoKz7BO/eEvOu6M45eUBL7XYbOL+3apcLaPQky6YdMptpXwWZQRS/YFmcPdC6l/eHQ=="
-      },
       "Laylua": {
         "type": "Direct",
         "requested": "[1.0.0, )",
@@ -90,6 +84,9 @@
         }
       },
       "ecommons": {
+        "type": "Project"
+      },
+      "ImGuiColorTextEditNetDalamud": {
         "type": "Project"
       }
     }

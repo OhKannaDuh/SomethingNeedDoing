@@ -1,6 +1,8 @@
 ﻿using Dalamud.Interface;
 using Dalamud.Interface.Utility.Raii;
 using DalamudCodeEditor;
+using DalamudCodeEditor.TextEditor;
+using TextEditor = DalamudCodeEditor.TextEditor.Editor;
 using SomethingNeedDoing.Core.Interfaces;
 
 namespace SomethingNeedDoing.Gui.Editor;
@@ -10,20 +12,17 @@ namespace SomethingNeedDoing.Gui.Editor;
 /// </summary>
 public class CodeEditor
 {
-    private readonly TextEditor _editor = new(new LuaLanguageDefinition())
-    {
-        Palette = PaletteBuilder.GetDarkPalette(),
-    };
+    private readonly TextEditor _editor = new();
 
     private readonly Dictionary<MacroType, LanguageDefinition> languages = new()
     {
         {MacroType.Lua, new LuaLanguageDefinition()},
-        // {MacroType.Native, new NativeMacroLanguageDefinition()},
+        {MacroType.Native, new NativeMacroLanguageDefinition()},
     };
 
     private IMacro? macro = null;
 
-    public int LineCount => _editor.TotalLines();
+    public int LineCount => _editor.Buffer.LineCount;
 
     public void SetMacro(IMacro macro)
     {
@@ -31,26 +30,26 @@ public class CodeEditor
             return;
 
         this.macro = macro;
-        _editor.SetText(macro.Content);
+        _editor.Buffer.SetText(macro.Content);
+        _editor.UndoManager.Clear();
 
         if (languages.TryGetValue(macro.Type, out var language))
             _editor.Language = language;
     }
 
-    public void SetHighlightSyntax(bool highlightSyntax)
-        => _editor.Palette = highlightSyntax ? PaletteBuilder.GetDarkPalette() : PaletteBuilder.GetUnhighlightedDarkPalette();
+    public bool IsHighlightingSyntax() => _editor.Colorizer.Enabled;
 
-    public bool IsShowingWhitespaces() => _editor.IsShowingWhitespaces();
+    public void ToggleSyntaxHighlight() => _editor.Colorizer.Toggle();
 
-    public void ToggleWhitespace()
-        => _editor.SetShowWhitespaces(!IsShowingWhitespaces());
+    public bool IsShowingWhitespaces() => _editor.Style.ShowWhitespace;
 
-    public bool IsShowingLineNumbers() => _editor.IsShowingLineNumbers();
+    public void ToggleWhitespace() => _editor.Style.ToggleWhitespace();
 
-    public void ToggleLineNumbers()
-        => _editor.SetShowLineNumbers(!IsShowingLineNumbers());
+    public bool IsShowingLineNumbers() => _editor.Style.ShowLineNumbers;
 
-    public string GetContent() => _editor.GetText();
+    public void ToggleLineNumbers() => _editor.Style.ToggleLineNumbers();
+
+    public string GetContent() => _editor.Buffer.GetText();
 
     public bool Draw()
     {
@@ -60,8 +59,8 @@ public class CodeEditor
         }
 
         using var font = ImRaii.PushFont(UiBuilder.MonoFont);
-        _editor.Render(macro.Name);
+        _editor.Draw(macro.Name);
 
-        return _editor.IsTextChanged();
+        return _editor.Buffer.IsDirty;
     }
 }
