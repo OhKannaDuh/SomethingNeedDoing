@@ -1,6 +1,4 @@
-﻿using Dalamud.Interface;
-using Dalamud.Interface.Utility.Raii;
-using DalamudCodeEditor;
+﻿using DalamudCodeEditor;
 using TextEditor = DalamudCodeEditor.TextEditor.Editor;
 using SomethingNeedDoing.Core.Interfaces;
 
@@ -64,7 +62,6 @@ public class CodeEditor
         if (macro == null)
             return false;
 
-        using var font = ImRaii.PushFont(UiBuilder.MonoFont);
         _editor.Draw(macro.Name);
         return _editor.Buffer.IsDirty;
     }
