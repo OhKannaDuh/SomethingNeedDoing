@@ -1,26 +1,29 @@
-﻿using Dalamud.Interface;
-using Dalamud.Interface.Utility.Raii;
-using DalamudCodeEditor;
-using TextEditor = DalamudCodeEditor.TextEditor.Editor;
+﻿using ImGuiColorTextEditNet;
 using SomethingNeedDoing.Core.Interfaces;
 
 namespace SomethingNeedDoing.Gui.Editor;
 
 /// <summary>
-/// DalamudCodeEditor TextEditor wrapper.
+/// ImGuiColorTextEditNetDalamud TextEditor wrapper.
 /// </summary>
 public class CodeEditor
 {
     private readonly TextEditor _editor = new();
-
-    private readonly Dictionary<MacroType, LanguageDefinition> _languages = new()
+    private readonly Dictionary<MacroType, ISyntaxHighlighter> highlighters = new()
     {
-        { MacroType.Lua, new LuaLanguageDefinition() }, { MacroType.Native, new NativeMacroLanguageDefinition() },
+        {MacroType.Lua, new LuaHighlighter()},
+        {MacroType.Native, new NativeMacroHighlighter()},
     };
 
     private IMacro? macro = null;
+    private string previousText = "";
 
-    public int Lines => _editor.Buffer.LineCount;
+    public int Lines => _editor.TotalLines;
+
+    public CodeEditor()
+    {
+        _editor.Renderer.Palette = EditorPalettes.Highlight;
+    }
 
     public void SetMacro(IMacro macro)
     {
@@ -28,35 +31,27 @@ public class CodeEditor
             return;
 
         this.macro = macro;
-        _editor.Buffer.SetText(macro.Content);
-        _editor.UndoManager.Clear();
+        _editor.AllText = macro.Content;
+        previousText = _editor.AllText;
 
-        if (_languages.TryGetValue(macro.Type, out var language))
-            _editor.Language = language;
+        if (highlighters.TryGetValue(macro.Type, out var highlighter))
+            _editor.SyntaxHighlighter = highlighter;
     }
 
-    public bool IsHighlightingSyntax() => _editor.Colorizer.Enabled;
+    public void SetHighlightSyntax(bool highlightSyntax)
+        => _editor.Renderer.Palette = highlightSyntax ? EditorPalettes.Highlight : EditorPalettes.NoHighlight;
 
-    public void ToggleSyntaxHighlight() => _editor.Colorizer.Toggle();
+    public string GetContent() => _editor.AllText;
 
-    public bool IsShowingWhitespaces() => _editor.Style.ShowWhitespace;
-
-    public void ToggleWhitespace() => _editor.Style.ToggleWhitespace();
-
-    public bool IsShowingLineNumbers() => _editor.Style.ShowLineNumbers;
-
-    public void ToggleLineNumbers() => _editor.Style.ToggleLineNumbers();
-
-    public string GetContent() => _editor.Buffer.GetText();
-
-    public void SetReadonly(bool value)
+    public bool HasChanged()
     {
-        if (_editor.IsReadOnly == value)
+        if (previousText != _editor.AllText)
         {
-            return;
+            previousText = _editor.AllText;
+            return true;
         }
 
-        _editor.ToggleReadOnly();
+        return false;
     }
 
     public bool Draw()
@@ -64,8 +59,7 @@ public class CodeEditor
         if (macro == null)
             return false;
 
-        using var font = ImRaii.PushFont(UiBuilder.MonoFont);
-        _editor.Draw(macro.Name);
-        return _editor.Buffer.IsDirty;
+        _editor.Render(macro.Name);
+        return HasChanged();
     }
 }

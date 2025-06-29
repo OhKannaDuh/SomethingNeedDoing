@@ -18,6 +18,8 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
 {
     private readonly IMacroScheduler _scheduler = scheduler;
     private readonly GitMacroManager _gitManager = gitManager;
+    private bool _showLineNumbers = true;
+    private bool _highlightSyntax = true;
     private UpdateState _updateState = UpdateState.Unknown;
     private readonly CodeEditor _editor = new();
 
@@ -75,11 +77,7 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
         var startBtn = GetStartOrResumeAction(macro);
         group.AddIconOnly(FontAwesomeIcon.PlayCircle, () => startBtn.action(), startBtn.tooltip);
         group.AddIconOnly(FontAwesomeIcon.PauseCircle, () => _scheduler.PauseMacro(macro.Id), "Pause", new() { Condition = () => _scheduler.GetMacroState(macro.Id) is MacroState.Running });
-        group.AddIconOnly(FontAwesomeIcon.StopCircle, () =>
-        {
-            _scheduler.StopMacro(macro.Id);
-            _editor.SetReadonly(false);
-        }, "Stop");
+        group.AddIconOnly(FontAwesomeIcon.StopCircle, () => _scheduler.StopMacro(macro.Id), "Stop");
         group.AddIconOnly(FontAwesomeIcon.Clipboard, () => Copy(macro.Content), "Copy");
         group.Draw();
     }
@@ -87,25 +85,13 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
     private (Action action, string tooltip) GetStartOrResumeAction(IMacro macro)
         => _scheduler.GetMacroState(macro.Id) switch
         {
-            MacroState.Paused => (() =>
-            {
-                _editor.SetReadonly(true);
-                _scheduler.ResumeMacro(macro.Id);
-            }, "Resume"),
-            _ => (() =>
-            {
-                _editor.SetReadonly(true);
-                _scheduler.StartMacro(macro);
-            }, "Start")
+            MacroState.Paused => (() => _scheduler.ResumeMacro(macro.Id), "Resume"),
+            _ => (() => _scheduler.StartMacro(macro), "Start")
         };
 
     private void DrawRightAlignedControls(IMacro macro)
     {
-        int buttonCount = 4;
-        int offset = 40 * buttonCount;
-        int gitMacroPadding = 25;
-
-        ImGui.SameLine(ImGui.GetWindowWidth() - (macro is ConfigMacro { IsGitMacro: true } ? offset + gitMacroPadding : offset));
+        ImGui.SameLine(ImGui.GetWindowWidth() - (macro is ConfigMacro { IsGitMacro: true } ? 145 : 120));
 
         using var _ = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey);
 
@@ -122,16 +108,17 @@ public class MacroEditor(IMacroScheduler scheduler, GitMacroManager gitManager, 
         }
 
         ImGui.SameLine();
-        if (ImGuiUtils.IconButton(_editor.IsShowingLineNumbers() ? FontAwesomeHelper.IconSortAsc : FontAwesomeHelper.IconSortDesc, "Toggle Line Numbers"))
-            _editor.ToggleLineNumbers();
+        if (ImGuiUtils.IconButton(
+            _showLineNumbers ? FontAwesomeHelper.IconSortAsc : FontAwesomeHelper.IconSortDesc,
+            "Toggle Line Numbers"))
+            _showLineNumbers = !_showLineNumbers;
 
         ImGui.SameLine();
-        if (ImGuiUtils.IconButton(_editor.IsShowingWhitespaces() ? FontAwesomeHelper.IconInvisible : FontAwesomeHelper.IconVisible, "Toggle Line Numbers"))
-            _editor.ToggleWhitespace();
-
-        ImGui.SameLine();
-        if (ImGuiUtils.IconButton(_editor.IsHighlightingSyntax() ? FontAwesomeHelper.IconCheck : FontAwesomeHelper.IconXmark, "Syntax Highlighting"))
-            _editor.ToggleSyntaxHighlight();
+        if (ImGuiUtils.IconButton(_highlightSyntax ? FontAwesomeHelper.IconCheck : FontAwesomeHelper.IconXmark, "Syntax Highlighting"))
+        {
+            _highlightSyntax = !_highlightSyntax;
+            _editor.SetHighlightSyntax(_highlightSyntax);
+        }
 
         if (macro is ConfigMacro { IsGitMacro: true } configMacro)
         {
